@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly GTM Report - Snapshot</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --ember: #F15B06;
+    --ember-dark: #c94b04;
+    --ember-light: #fff0e6;
+    --twilight: #A48AFB;
+    --shale: #E9EAEB;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --green: #16a34a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f9fafb; color: var(--gray-800); font-size: 14px; }
+
+  /* Snapshot banner */
+  .snapshot-banner {
+    background: #fef3c7;
+    border-bottom: 2px solid #f59e0b;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 13px;
+    color: #92400e;
+    font-weight: 500;
+  }
+
+  /* Header */
+  .header {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left h1 { font-size: 20px; font-weight: 700; color: var(--gray-800); }
+  .header-left .status { font-size: 12px; color: var(--gray-600); margin-top: 2px; }
+  .region-toggles { display: flex; gap: 6px; flex-wrap: wrap; }
+  .region-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--gray-200);
+    background: white; color: var(--gray-600); font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .region-btn:hover { border-color: var(--ember); color: var(--ember); }
+  .region-btn.active { background: var(--ember); border-color: var(--ember); color: white; }
+
+  /* Tabs */
+  .tabs { background: white; border-bottom: 1px solid var(--gray-200); padding: 0 24px; display: flex; gap: 0; }
+  .tab-btn {
+    padding: 12px 20px; border: none; background: none; font-size: 14px;
+    font-weight: 500; color: var(--gray-600); cursor: pointer;
+    border-bottom: 3px solid transparent; transition: all 0.15s; margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--ember); }
+  .tab-btn.active { color: var(--ember); border-bottom-color: var(--ember); }
+
+  /* Content */
+  .tab-content { display: none; padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+
+  /* Cards */
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+  .grid-2-3 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; }
+
+  @media (max-width: 900px) {
+    .grid-2, .grid-4, .grid-2-3 { grid-template-columns: 1fr; }
+  }
+
+  /* Metric cards */
+  .metric-card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; }
+  .metric-label { font-size: 12px; color: var(--gray-600); font-weight: 500; margin-bottom: 4px; }
+  .metric-value { font-size: 24px; font-weight: 700; color: var(--gray-800); }
+  .metric-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .metric-badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 600; margin-top: 4px; }
+  .badge-global { background: var(--shale); color: var(--gray-600); }
+
+  /* MTD section */
+  .mtd-section { margin-bottom: 16px; }
+  .mtd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 700px) { .mtd-grid { grid-template-columns: 1fr; } }
+  .mtd-card { background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; }
+  .mtd-label { font-size: 12px; color: var(--gray-600); font-weight: 500; margin-bottom: 6px; }
+  .mtd-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+  .mtd-value { font-size: 22px; font-weight: 700; }
+  .mtd-target { font-size: 13px; color: var(--gray-600); }
+  .progress-bar-bg { background: var(--gray-200); border-radius: 4px; height: 8px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+  .progress-pct { font-size: 12px; color: var(--gray-600); margin-top: 4px; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; background: var(--gray-100); font-weight: 600; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-100); }
+  .deal-link { color: var(--ember); text-decoration: none; font-weight: 500; }
+  .deal-link:hover { text-decoration: underline; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-anz { background: #dbeafe; color: #1d4ed8; }
+  .badge-sea { background: #ede9fe; color: #6d28d9; }
+  .badge-us { background: #dcfce7; color: #15803d; }
+  .badge-other { background: var(--shale); color: var(--gray-600); }
+  .badge-new { background: var(--ember-light); color: var(--ember-dark); }
+  .badge-expansion { background: #ecfdf5; color: #065f46; }
+  .badge-renewal { background: #f0f9ff; color: #0369a1; }
+  .empty-state { padding: 24px; text-align: center; color: var(--gray-400); font-style: italic; }
+
+  /* Chart containers */
+  .chart-container { position: relative; height: 200px; }
+  .chart-container-tall { position: relative; height: 240px; }
+
+  /* Priority deals */
+  .priority-meta { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+  .days-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .days-urgent { background: #fee2e2; color: #dc2626; }
+  .days-soon { background: #fef3c7; color: #d97706; }
+  .days-ok { background: #dcfce7; color: #15803d; }
+
+  /* Sales metrics card */
+  .kv-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--gray-200); }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-label { color: var(--gray-600); font-size: 13px; }
+  .kv-value { font-weight: 700; font-size: 14px; color: var(--gray-800); }
+
+  .section-title { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 12px; }
+
+  /* Live-artifact style section headers */
+  .section-header { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#6b7280; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #e5e7eb; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px; }
+  .section-header-right { font-size:11px; font-weight:400; text-transform:none; letter-spacing:0; color:#9ca3af; }
+  .badge-sf { background:#dbeafe; color:#1d4ed8; font-size:9px; font-weight:700; padding:2px 6px; border-radius:4px; text-transform:uppercase; letter-spacing:.3px; display:inline-block; }
+  .reporting-week-box { background:var(--ember-light); border:1px solid #fdd0b1; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:var(--ember-dark); }
+  .info-banner { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#1e40af; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Weekly GTM Report</h1>
+    <div class="status">Snapshot: 3 Jun 2026 | W/C 25 May – 31 May 2026</div>
+  </div>
+  <div class="region-toggles">
+    <button class="region-btn active" onclick="setRegion('ALL')">All</button>
+    <button class="region-btn" onclick="setRegion('ANZ')">ANZ</button>
+    <button class="region-btn" onclick="setRegion('SEA')">SEA</button>
+    <button class="region-btn" onclick="setRegion('US')">US</button>
+    <button class="region-btn" onclick="setRegion('OTHER')">Other</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="setTab('overview')">Overview</button>
+  <button class="tab-btn" onclick="setTab('sales')">Sales Metrics</button>
+  <button class="tab-btn" onclick="setTab('priority')">Priority Deals</button>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div id="tab-overview" class="tab-content active">
+
+  <div class="info-banner">
+    📸 Static snapshot &ndash; data frozen at time of export. Open the live version in Claude to see real-time data.
+  </div>
+
+  <div class="reporting-week-box">
+    <strong>Reporting week:</strong> W/C 25 May 2026 &ndash; 31 May 2026
+  </div>
+
+  <!-- Weekly charts row -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-header">
+        Commissionable Value <span class="badge-sf">Snowflake</span>
+        <span class="section-header-right">13-week trend</span>
+      </div>
+      <div class="chart-container"><canvas id="chartWeeklyCV"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        Pipeline Generated <span class="badge-sf">Snowflake</span>
+        <span class="section-header-right">13-week trend</span>
+      </div>
+      <div class="chart-container"><canvas id="chartWeeklyPipeline"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Monthly charts row -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="section-header">
+        Commissionable Value <span id="cv-monthly-vs-target">vs Target</span> <span class="badge-sf">Snowflake</span>
+        <span class="section-header-right">CY2026 monthly</span>
+      </div>
+      <div class="chart-container-tall"><canvas id="chartMonthlyCV"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        Pipeline Generated <span id="pipe-monthly-vs-target">vs Target</span> <span class="badge-sf">Snowflake</span>
+        <span class="section-header-right">CY2026 monthly</span>
+      </div>
+      <div class="chart-container-tall"><canvas id="chartMonthlyPipeline"></canvas></div>
+    </div>
+  </div>
+
+  <!-- MTD section -->
+  <div class="mtd-section">
+    <div class="mtd-grid">
+      <div class="mtd-card" id="mtd-cv-card">
+        <div class="mtd-label">June 2026 CV MTD</div>
+        <div class="mtd-row">
+          <div class="mtd-value" id="mtd-cv-value">--</div>
+          <div class="mtd-target" id="mtd-cv-target"></div>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="mtd-cv-bar" style="width:0%;background:var(--ember)"></div></div>
+        <div class="progress-pct" id="mtd-cv-pct"></div>
+      </div>
+      <div class="mtd-card" id="mtd-pipe-card">
+        <div class="mtd-label">June 2026 Pipeline MTD</div>
+        <div class="mtd-row">
+          <div class="mtd-value" id="mtd-pipe-value">--</div>
+          <div class="mtd-target" id="mtd-pipe-target"></div>
+        </div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="mtd-pipe-bar" style="width:0%;background:var(--twilight)"></div></div>
+        <div class="progress-pct" id="mtd-pipe-pct"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom 4 metric cards -->
+  <div class="grid-4">
+    <div class="metric-card">
+      <div class="metric-label">CV (W/C May 25)</div>
+      <div class="metric-value" id="metric-cv-week">--</div>
+      <div class="metric-sub" id="metric-cv-week-sub"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Pipeline Generated (W/C May 25)</div>
+      <div class="metric-value" id="metric-pipe-week">--</div>
+      <div class="metric-sub" id="metric-pipe-week-sub"></div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">ARR Add (W/C May 25)</div>
+      <div class="metric-value">$71K</div>
+      <span class="metric-badge badge-global">All markets</span>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">New Customers (W/C May 25)</div>
+      <div class="metric-value">29</div>
+      <span class="metric-badge badge-global">All markets</span>
+    </div>
+  </div>
+</div>
+
+<!-- SALES METRICS TAB -->
+<div id="tab-sales" class="tab-content">
+  <div class="grid-2-3" style="align-items:start">
+    <div class="card">
+      <div class="card-title">This Week (W/C 25 May 2026)</div>
+      <div id="sales-kv"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Closed Deals (W/C 25 May 2026)</div>
+      <div class="table-wrap" id="closed-deals-table"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Pipeline Created (W/C 25 May 2026)</div>
+    <div class="table-wrap" id="pipeline-created-table"></div>
+  </div>
+</div>
+
+<!-- PRIORITY DEALS TAB -->
+<div id="tab-priority" class="tab-content">
+  <div class="card">
+    <div class="card-title">Open Pipeline - Closing Within 28 Days (by 1 Jul 2026)</div>
+    <div class="table-wrap" id="priority-deals-table"></div>
+  </div>
+</div>
+
+<script>
+// =============================================================================
+// DATA
+// =============================================================================
+
+const SNAPSHOT_DATE  = '3 Jun 2026';
+const FEATURED_WK    = '2026-05-25';
+const FEATURED_WK_END = '2026-06-01';
+const FEATURED_LABEL = 'W/C 25 May 2026 – 31 May 2026';
+
+const KPI_WEEKS = [
+  {wk:'2026-05-25',trials:65,newCustomers:29,totalArr:4779267.68,arrDelta:70996.24,cv:111429,churnArr:32910.84},
+  {wk:'2026-05-18',trials:72,newCustomers:21,totalArr:4708271.43,arrDelta:49472.52,cv:79766,churnArr:6600},
+  {wk:'2026-05-11',trials:98,newCustomers:22,totalArr:4658798.91,arrDelta:110136.07,cv:73930,churnArr:10112.64},
+  {wk:'2026-05-04',trials:82,newCustomers:34,totalArr:4548662.85,arrDelta:167805.31,cv:213401.6,churnArr:12180},
+  {wk:'2026-04-27',trials:58,newCustomers:37,totalArr:4380857.54,arrDelta:102443.80,cv:192746.4,churnArr:7728},
+  {wk:'2026-04-20',trials:67,newCustomers:22,totalArr:4278413.74,arrDelta:113744.40,cv:169411,churnArr:6468},
+  {wk:'2026-04-13',trials:60,newCustomers:23,totalArr:4164669.34,arrDelta:55976.85,cv:88206,churnArr:5220},
+  {wk:'2026-04-06',trials:48,newCustomers:24,totalArr:4108692.49,arrDelta:67601.43,cv:66335.8,churnArr:9180},
+  {wk:'2026-03-30',trials:56,newCustomers:25,totalArr:4041091.06,arrDelta:274647.91,cv:106406,churnArr:6462.6},
+  {wk:'2026-03-23',trials:91,newCustomers:23,totalArr:3766443.15,arrDelta:42299.48,cv:106768,churnArr:11880},
+  {wk:'2026-03-16',trials:90,newCustomers:24,totalArr:3724143.68,arrDelta:129640.76,cv:191834,churnArr:7920},
+  {wk:'2026-03-09',trials:69,newCustomers:22,totalArr:3594502.92,arrDelta:92816.68,cv:64917.56,churnArr:12864},
+  {wk:'2026-03-02',trials:83,newCustomers:23,totalArr:3501686.24,arrDelta:50466.48,cv:79556.36,churnArr:4232.64},
+];
+
+const MONTHLY_TARGETS = {
+  cv: {
+    '2026-01-01':258477,'2026-02-01':412411,'2026-03-01':498075,
+    '2026-04-01':532462,'2026-05-01':580867,'2026-06-01':629273,
+    '2026-07-01':672636,'2026-08-01':722050,'2026-09-01':753312,
+    '2026-10-01':790625,'2026-11-01':815836,'2026-12-01':500998,
+  },
+  pipeline: {
+    '2026-01-01':895200,'2026-02-01':1408950,'2026-03-01':1699000,
+    '2026-04-01':1802500,'2026-05-01':1996000,'2026-06-01':2189500,
+    '2026-07-01':2370500,'2026-08-01':2581500,'2026-09-01':2702500,
+    '2026-10-01':2853500,'2026-11-01':2944500,'2026-12-01':1803300,
+  }
+};
+
+// Closed deals for W/C May 25 2026 (from Snowflake)
+// [id, name, amount_aud, close_date, cv, market, sub_type]
+const CLOSED_DEALS_RAW = [
+  ["184391651825","Virgin Australia - Acc Expansion",23150,"2026-05-29",23150,"ANZ","Annual"],
+  ["204959019487","Thomson Reuters - New Deal",9900,"2026-05-29",9900,"ANZ","Annual"],
+  ["269049346511","Intelligencebank - New Deal",9900,"2026-05-29",9900,"ANZ","Annual"],
+  ["262721624557","Nestle - New Deal",9900,"2026-05-26",9900,"ANZ","Annual"],
+  ["221249639878","Softwareone x Crayon - New Deal",9000,"2026-05-29",9000,"ANZ","Annual"],
+  ["264729497039","National Basketball League - New Deal",7920,"2026-06-01",7920,"ANZ","Annual"],
+  ["270983238132","Garner - Expansion (Darcy & Andy)",7704,"2026-05-28",7704,"ANZ","Annual"],
+  ["266561231309","Paydibs - New Deal",7656,"2026-05-28",7656,"South East Asia","Annual"],
+  ["271763753425","Ilaria - New Deal",6600,"2026-06-01",6600,"ANZ","Annual"],
+  ["266939844054","MainPac",4583,"2026-05-29",4583,"ANZ","Annual"],
+  ["262880739828","Victorian Automotive Chamber of Commerce - New Deal",3960,"2026-05-29",3960,"ANZ","Annual"],
+  ["263104941512","Dtsl - New Deal",3000,"2026-05-29",3000,"ANZ","Annual"],
+  ["267252718061","Bentley Recruitment - New Deal",2640,"2026-05-27",2640,"ANZ","Annual"],
+  ["271737083382","Intermax - Annual conversion",2640,"2026-06-01",2640,"ANZ","Annual"],
+  ["269417355717","Smith Brothers Media - New Deal",1980,"2026-05-26",1980,"ANZ","Annual"],
+  ["263143879129","Checkmate - New Deal",1980,"2026-05-27",1980,"ANZ","Annual"],
+  ["271763805648","Weel - Expansion",1800,"2026-06-01",1800,"ANZ","Annual"],
+  ["271716053466","Sharp & Carter - Expansion",1800,"2026-06-01",1800,"ANZ","Annual"],
+  ["264780693982","Capital J Investments - New Deal",1782,"2026-05-27",1782,"ANZ","Annual"],
+  ["268767747559","Finspectra - New Deal",1320,"2026-05-28",1320,"ANZ","Annual"],
+  ["267246255579","Wallis Social Research - New Deal",1320,"2026-05-27",1320,"ANZ","Annual"],
+  ["271338594750","Cuttable - Expansion",1320,"2026-05-28",1320,"ANZ","Annual"],
+  ["266561235439","North Melbourne FC - New Deal",1320,"2026-05-26",1320,"ANZ","Annual"],
+  ["266186859997","Unirack - New Deal",1320,"2026-05-28",1320,"ANZ","Annual"],
+  ["270023344620","Premier Outsourcing - New Deal",1320,"2026-05-26",1320,"ANZ","Annual"],
+  ["266980749783","Sunrise AI - New Deal",1320,"2026-05-28",1320,"ANZ","Annual"],
+  ["270700904892","Avion Agency - New Deal",1320,"2026-05-29",1320,"ANZ","Annual"],
+  ["271130912230","perkx - New Deal",1320,"2026-06-01",1320,"ANZ","Annual"],
+  ["270145278442","Catherine Delaney",1320,"2026-06-01",1320,"ANZ","Annual"],
+  ["269596231155","Centrix - New Deal",1245,"2026-05-28",1245,"ANZ","Annual"],
+  ["268276157937","TechTrade - New Deal",1245,"2026-05-28",1245,"ANZ","Annual"],
+  ["270984003048","AF Recruitment - New Deal",960,"2026-05-28",960,"ANZ","Annual"],
+  ["270983920114","Impactlab - Expansion",647.4,"2026-05-27",647.4,"ANZ","Annual"],
+  ["271432697291","Tridence - Expansion",647.4,"2026-05-29",647.4,"ANZ","Annual"],
+  ["270983918056","Sterling Black - New Deal",1980,"2026-05-29",330.0,"ANZ","Monthly"],
+  ["270985266653","Pulsify - New Deal",1980,"2026-05-26",330.0,"ANZ","Monthly"],
+  ["270983146947","Refresh - New Deal",1980,"2026-05-26",330.0,"ANZ","Monthly"],
+  ["269694485989","Corporate Momentum - New Deal",1980,"2026-05-27",330.0,"ANZ","Monthly"],
+  ["271761443311","OneAdvanced - expansion",1980,"2026-06-01",330.0,"ANZ","Monthly"],
+  ["266594628034","Driverseat - New Deal",1892.4,"2026-05-26",315.4,"ANZ","Monthly"],
+  ["267242615275","Rosterlab - New Deal",1892.4,"2026-05-29",315.4,"ANZ","Monthly"],
+];
+
+// Pipeline created W/C May 25 2026
+// [id, name, amount_aud, create_date, close_date, market, dealstage]
+const PIPELINE_CREATED_RAW = [
+  ["271512471032","Six Degrees Executive - New Deal",40000,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["271512531441","Brandwatch - New Deal",22000,"2026-05-29","2026-07-31","ANZ","70329638"],
+  ["271354966476","The Hatchery - New Deal",20000,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["270926921205","Ingram Micro - New Deal",20000,"2026-05-27","2026-06-26","ANZ","1133383220"],
+  ["270983296488","Vasion - New Deal",19140,"2026-05-28","2026-06-27","South East Asia","70329638"],
+  ["271597570530","SevenRooms - New Deal",15840,"2026-05-29","2026-06-28","ANZ","1133383220"],
+  ["271303093750","Kingpin - New Deal",13860,"2026-05-26","2026-06-09","ANZ","1133383220"],
+  ["270983204339","Canon BlueG Consulting - New Deal",11880,"2026-05-27","2026-07-31","ANZ","70329638"],
+  ["271555826159","MTP Services - Renewal",10560,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["271626581452","Rystad Energy - New Deal",9900,"2026-06-01","2026-07-01","ANZ","70329638"],
+  ["271432089066","Garner - Expansion",9900,"2026-05-28","2026-05-28","","70329638"],
+  ["271130926542","Foodfx Australia - New Deal",9900,"2026-05-28","2026-09-30","ANZ","70329638"],
+  ["270983917006","Revizto - New Deal",9900,"2026-05-27","2026-07-31","ANZ","70329638"],
+  ["270985448948","MyPass Global - New Deal",9900,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["270983232955","GEODIS - New Deal",9900,"2026-05-27","2026-06-26","ANZ","70329638"],
+  ["270927083997","Cevo Australia - New Deal",9540,"2026-05-29","2026-07-31","ANZ","70329638"],
+  ["270926830028","Blinq - New Deal",8000,"2026-05-26","2026-07-20","ANZ","70329638"],
+  ["270926841292","Advantech - New Deal",7920,"2026-05-26","2026-07-31","ANZ","70329638"],
+  ["271459805678","Megt Australia - Renewal",7920,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["271833738702","Vissibl - New Deal",7200,"2026-05-26","2026-07-02","ANZ","70329638"],
+  ["271432378820","Worldline - Renewal",6600,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["270983308750","Infotrust - Expansion",6600,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["271271012805","Dexion Storage Solutions - New Deal",5940,"2026-05-27","2026-06-26","ANZ","70329638"],
+  ["271178186217","Hostaway - New Deal",5940,"2026-05-26","2026-06-26","ANZ","1133383220"],
+  ["270983862770","SoftLabs - New Deal",5940,"2026-05-26","2026-06-25","ANZ","70329638"],
+  ["271178238396","ReadiNow - New Deal",5940,"2026-05-27","2026-06-26","ANZ","70329638"],
+  ["271355026877","SK tes - New Deal",5780,"2026-05-29","2026-07-31","ANZ","70329638"],
+  ["270984073713","GRUNDFOS - New Deal",3960,"2026-05-29","2026-06-28","ANZ","70329638"],
+  ["271271013868","AS White Global - New Deal",3960,"2026-05-27","2026-06-26","ANZ","70329638"],
+  ["271836628421","Everest Commercial Property - New Deal",3960,"2026-06-01","2026-07-02","ANZ","70329638"],
+  ["270983909839","Canon - SA - New Deal",3900,"2026-05-27","2026-06-26","ANZ","1133383220"],
+  ["270984585667","Leadapreneur - New Deal",3828,"2026-05-26","2026-06-25","South East Asia","70329638"],
+  ["270926862786","Label Power Pty Ltd - New Deal",2880,"2026-05-26","2026-06-30","ANZ","1133383220"],
+  ["271555892714","GA Systems - Renewal",2640,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["270985527757","Vinda - New Deal",2508,"2026-05-29","2026-06-28","South East Asia","70329638"],
+  ["271270935021","Premier Construction Software - New Deal",1980,"2026-05-26","2026-06-25","ANZ","70329638"],
+  ["271555898814","Kytec - Renewal",1980,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["271428343252","New Deal",1980,"2026-05-28","2026-06-11","ANZ","1133383220"],
+  ["271376722373","WastePro - New Deal",1980,"2026-05-27","2026-06-10","ANZ","1133383220"],
+  ["271402059234","Foster Care Sports - New Deal",1980,"2026-05-27","2026-06-10","ANZ","1133383220"],
+  ["270926825942","The Event Gap - New Deal",1980,"2026-05-26","2026-06-05","ANZ","1133383223"],
+  ["271455482351","IQ Group, Australia - Renewal",1980,"2026-05-28","2026-08-26","ANZ","2390834666"],
+  ["271399859657","Evans Davis Recruitment - New Deal",1980,"2026-05-27","2026-06-10","ANZ","1133383222"],
+  ["271346457032","Para Mobility - Renewal",1980,"2026-05-27","2026-08-25","ANZ","2390834666"],
+  ["271512541639","Dialpad - New Deal",1980,"2026-05-29","2026-06-28","ANZ","70329638"],
+  ["271736760771","Maximus Bpo - New Deal",1980,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["271512750550","Turnkey IPS - New Deal",1980,"2026-06-01","2026-07-01","ANZ","70329638"],
+  ["271299752424","Curve - New Deal",1980,"2026-05-26","2026-06-09","ANZ","1133383220"],
+  ["270927024576","PALRAM Industries - New Deal",1980,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["271439448526","McNair - Renewal",1980,"2026-05-28","2026-08-26","ANZ","2390834666"],
+  ["271376916935","Notitia - New Deal",1980,"2026-05-27","2026-06-10","ANZ","1133383220"],
+  ["271749964260","Dbiz Solution - New Deal",1980,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["271399674328","AGN Solutions - New Deal",1980,"2026-05-27","2026-06-10","ANZ","1133383220"],
+  ["271439391202","Earlymark - Renewal",1980,"2026-05-28","2026-08-26","ANZ","2390834666"],
+  ["271625263605","Access4 - New Deal",1980,"2026-06-01","2026-07-01","ANZ","70329638"],
+  ["271130994108","Fantech - New Deal",1980,"2026-05-29","2026-06-28","ANZ","1133383220"],
+  ["271520361947","Robyn Preston - New Deal",1980,"2026-05-28","2026-06-11","ANZ","1133383220"],
+  ["271764184565","New Deal",1980,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["270983134702","Web Antler - New Deal",1892.4,"2026-05-26","2026-06-25","ANZ","1133383221"],
+  ["270985526777","Factory AI - New Deal",1320,"2026-05-29","2026-06-28","ANZ","1133383220"],
+  ["271300061640","STONE & FRANK - New Deal",1320,"2026-05-26","2026-06-09","ANZ","1133383220"],
+  ["271355232742","HireCloud - New Deal",1320,"2026-06-01","2026-06-26","ANZ","1133383220"],
+  ["271355233722","Newdoc - New Deal",1320,"2026-06-01","2026-07-01","ANZ","70329638"],
+  ["270985509340","Naala - New Deal",1320,"2026-05-29","2026-06-28","ANZ","70329638"],
+  ["271280519666","Apollo Engineering - Renewal",1320,"2026-05-26","2026-08-24","ANZ","2390834666"],
+  ["271509224931","Kloudify Technologies - Expansion",1320,"2026-05-28","2026-05-28","","70329638"],
+  ["270985439711","Wingmaven - New Deal",1320,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["271354959298","OnePassport - New Deal",1320,"2026-05-28","2026-07-31","ANZ","70329638"],
+  ["271270952422","Rhombus - New Deal",1320,"2026-05-27","2026-06-26","ANZ","70329638"],
+  ["271512452597","Projected Resources - New Deal",1320,"2026-05-28","2026-06-27","ANZ","1133383220"],
+  ["271315724751","Mosh Social Media - Renewal",1320,"2026-05-26","2026-08-24","ANZ","2390834666"],
+  ["270985526773","PageProof - New Deal",1320,"2026-05-29","2026-06-28","ANZ","70329638"],
+  ["270983871934","Fork Force Australia - New Deal",1320,"2026-05-27","2026-06-26","ANZ","1133383220"],
+  ["271178256857","Lamplighter - New Deal",1320,"2026-05-27","2026-06-29","ANZ","1133383220"],
+  ["271626577364","Align Recruiting - New Deal",1320,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["271763773885","Light Me Up Therapy - New Deal",1320,"2026-06-01","2026-07-01","ANZ","1133383220"],
+  ["271728376281","Bne Commercial waterproofing - New Deal",1320,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["271355041255","GutLinx - New Deal",1254,"2026-05-29","2026-06-28","South East Asia","70329638"],
+  ["270983306722","Lumin Pdf - New Deal",1245,"2026-05-28","2026-06-27","ANZ","70329638"],
+  ["271625932262","That Procurement Project - New Deal",960,"2026-06-01","2026-06-15","ANZ","1133383220"],
+  ["271555827183","Ingressum - Renewal",960,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["271355020793","Contentstack - New Deal",960,"2026-05-29","2026-09-29","ANZ","70329638"],
+  ["271512543704","McHugh & Eastwood - New Deal",960,"2026-05-29","2026-08-28","ANZ","1133383220"],
+  ["270926945741","Recruitment Vision - New Deal",960,"2026-05-27","2026-07-17","ANZ","1133383220"],
+  ["271460122052","Farache Construction Group - New Deal",960,"2026-05-29","2026-06-12","ANZ","1133383220"],
+  ["270983128556","Solax Power UK - New Deal",960,"2026-05-26","2026-09-08","ANZ","70329638"],
+  ["271658909114","STM Trucks & Machinery - Renewal",960,"2026-05-31","2026-08-29","ANZ","2390834666"],
+  ["271362223583","Fuel Logic WA - Renewal",960,"2026-05-27","2026-08-25","ANZ","2390834666"],
+  ["271336370619","Todd Sekulich - New Deal",960,"2026-05-26","2026-06-09","ANZ","1133383220"],
+  ["270926925252","Tilegne Therapy Services - New Deal",960,"2026-05-27","2026-06-10","ANZ","1133383220"],
+  ["271447903700","Sacred Systems - New Deal",960,"2026-05-29","2026-06-12","ANZ","1133383220"],
+  ["270927011300","Above Property Group - New Deal",960,"2026-05-28","2026-08-14","ANZ","1133383220"],
+  ["271512723915","Durazon Group - New Deal",946.2,"2026-06-01","2026-07-01","ANZ","1133383220"],
+  ["271566400999","HCi Professional Services - Renewal",780,"2026-05-29","2026-08-27","ANZ","2390834666"],
+  ["271366431197","Darzin - Expansion",660,"2026-05-29","2026-05-28","","70329638"],
+];
+
+// Open pipeline (closing Jun 3 - Jul 1 2026) - from provided spec
+// [id, name, amount_aud, close_date, market, dealstage]
+const OPEN_PIPELINE_RAW = [
+  ["269686116799","SEEK - New Deal",50000,"2026-06-13","ANZ","70329638"],
+  ["36044869894","AvePoint - New Deal",45000,"2026-06-30","ANZ","1133383222"],
+  ["238584363502","FUJIFILM New Zealand - New Deal",43326,"2026-06-04","ANZ","1133383223"],
+  ["271512471032","Six Degrees Executive - New Deal",40000,"2026-06-27","ANZ","70329638"],
+  ["235001574848","Datacom - New Deal",29900,"2026-06-29","ANZ","1133383221"],
+  ["262245866981","Sas - New Deal",29700,"2026-06-30","ANZ","1133383220"],
+  ["36042954582","Eftsure - Expansion",29160,"2026-06-15","ANZ","1133383221"],
+  ["266479821299","Nearmap - New Deal",28800,"2026-06-21","ANZ","1133383222"],
+  ["269597984192","nextmedia Pty Ltd - New Deal",27000,"2026-06-10","ANZ","1133383221"],
+  ["248916634090","AGL - New Deal",23040,"2026-06-30","ANZ","1133383222"],
+  ["268714279400","Trade Assist - New Deal",22708.8,"2026-06-04","ANZ","1133383221"],
+  ["271354966476","The Hatchery - New Deal",20000,"2026-06-27","ANZ","70329638"],
+  ["270984307171","Qube - New Deal",20000,"2026-06-21","ANZ","70329638"],
+  ["268767029704","Corpay Cross-Border - New Deal",20000,"2026-06-29","ANZ","1133383221"],
+  ["270926921205","Ingram Micro - New Deal",20000,"2026-06-26","ANZ","1133383220"],
+  ["266021236166","hellomonday - New Deal",19800,"2026-06-30","ANZ","70329638"],
+  ["271178106351","Vodafone Business Centre Silverwater - New Deal",19800,"2026-06-24","ANZ","70329638"],
+  ["266939849176","Knightcorp Insurance Brokers - New Deal",19800,"2026-06-30","ANZ","1133383220"],
+  ["270983296488","Vasion - New Deal",19140,"2026-06-27","South East Asia","70329638"],
+  ["251409872364","TeamViewer - New Deal",17820,"2026-06-30","ANZ","1133383220"],
+  ["270039881186","Team Global Express NZ - New Deal",16600,"2026-06-30","ANZ","70329638"],
+  ["269687634423","Cognizant - New Deal",15840,"2026-06-14","ANZ","70329638"],
+  ["271597570530","SevenRooms - New Deal",15840,"2026-06-28","ANZ","1133383220"],
+  ["269685265892","Techforce Personnel - expansion",15840,"2026-06-24","ANZ","70329638"],
+  ["270399016425","121 Brokers - New Deal",15840,"2026-06-19","ANZ","70329638"],
+  ["267245524431","Nestle Nespresso - New Deal",15840,"2026-06-17","ANZ","1133383220"],
+  ["264735311301","Kantar - Expansion",13860,"2026-06-05","ANZ","1133383221"],
+  ["268784331240","Crannull - New Deal",13860,"2026-06-06","ANZ","1133383221"],
+  ["263703555551","Gripple - New Deal",13860,"2026-06-09","ANZ","1133383220"],
+  ["270983762419","TEEG - New Deal",13860,"2026-06-24","ANZ","1133383220"],
+  ["194102723045","Capital Transport - New Deal",12600,"2026-06-29","ANZ","1133383221"],
+  ["251218440693","OMRON Global - New Deal",12000,"2026-06-30","ANZ","1133383220"],
+  ["269795930613","Sadie - New Deal",11880,"2026-06-19","ANZ","1133383220"],
+  ["268784332245","The Andersen Partnership - New Deal",10692,"2026-06-29","ANZ","1133383221"],
+  ["270926861771","SalesSourcers - New Deal",9990,"2026-06-25","ANZ","70329638"],
+  ["270985448948","MyPass Global - New Deal",9900,"2026-06-27","ANZ","70329638"],
+  ["267052249565","Attribute Group - New Deal",9900,"2026-06-29","ANZ","1133383220"],
+  ["256788781560","Intelligent Business Solutions - Expansion",9900,"2026-06-25","ANZ","1133383223"],
+  ["269416650232","Veritas Recruitment - New Deal",9900,"2026-06-26","ANZ","1133383220"],
+  ["267673178597","Dentons - New Deal",9900,"2026-06-30","ANZ","70329638"],
+  ["238769829318","Origin Energy - New Deal",9900,"2026-06-12","ANZ","1133383223"],
+  ["269049287131","Hart Recruitment - New Deal",9900,"2026-06-11","ANZ","1133383220"],
+  ["270983232955","GEODIS - New Deal",9900,"2026-06-26","ANZ","70329638"],
+  ["262245876154","Pentana Solutions - New Deal",9900,"2026-06-30","ANZ","70329638"],
+  ["266594627043","Bastion Pacific - New Deal",9900,"2026-06-30","ANZ","1133383220"],
+  ["270207385038","OneAdvanced - Expansion",9900,"2026-06-18","ANZ","70329638"],
+  ["268714372581","MongoDB - New Deal",9570,"2026-06-05","South East Asia","1133383220"],
+  ["269986370041","Windcave USA - New Deal",9306,"2026-06-17","United States","70329638"],
+  ["252697369052","n3 - Business Buying Power - New Deal",9120,"2026-06-28","ANZ","1133383220"],
+  ["270966545883","Singularity Tech - New Deal",8640,"2026-06-05","ANZ","1133383220"],
+  ["268784271855","SearchX - New Deal",8640,"2026-06-05","ANZ","1133383220"],
+  ["268767026655","Brother International NZ Ltd - New Deal",8300,"2026-06-26","ANZ","70329638"],
+  ["266944090579","PB Tech - New Deal",8300,"2026-06-30","ANZ","70329638"],
+  ["266397694431","Cultivate Recruitment - New Deal",8217,"2026-06-30","ANZ","70329638"],
+  ["268198896072","Apparate - Expansion",8000,"2026-06-29","ANZ","1133383222"],
+  ["261244797378","I Laria - New Deal",7920,"2026-06-02","ANZ","1133383221"],
+  ["268767855080","Katz Recruitment - New Deal",7920,"2026-06-05","ANZ","1133383221"],
+  ["269597474235","Bureau Booths - New Deal",7920,"2026-06-21","ANZ","70329638"],
+  ["256981096930","LTM - New Deals",7920,"2026-06-30","ANZ","1133383220"],
+  ["265812579817","TSHR - New Deal",7920,"2026-06-11","ANZ","1133383220"],
+  ["268767151585","ThoughtSpot - New Deal",7920,"2026-06-19","ANZ","70329638"],
+  ["267673893308","Felton Industries - New Deal",7920,"2026-06-03","ANZ","1133383221"],
+  ["269686711739","Plexus - New Deal",7920,"2026-06-11","ANZ","70329638"],
+  ["268767784399","SprintSuite - New Deal",7920,"2026-06-21","ANZ","70329638"],
+  ["269597466097","Vasion - New Deal",7920,"2026-06-13","ANZ","70329638"],
+  ["268715149759","COPE Sensitive Freight - New Deal",7920,"2026-06-30","ANZ","70329638"],
+  ["269596342772","Cadgroup Australia - New Deal",7920,"2026-06-29","ANZ","70329638"],
+  ["262560795114","Lexmark - New Deal",7920,"2026-06-14","ANZ","1133383220"],
+  ["267254165990","Teamtailor - New Deal",7920,"2026-06-18","South East Asia","1133383220"],
+  ["270985221621","AVEVA - New Deal",7656,"2026-06-24","South East Asia","70329638"],
+  ["263143884252","Expeditors - New Deal",7620,"2026-06-30","ANZ","1133383220"],
+  ["151228799436","Qizzle - New Deal",7569.6,"2026-06-10","ANZ","1133383220"],
+  ["270594679254","Cartrack New Zealand - New Deal",7171.2,"2026-06-20","ANZ","1133383220"],
+  ["270983308750","Infotrust - Expansion",6600,"2026-06-27","ANZ","70329638"],
+  ["269595138510","Group Elephant - Expansion",6600,"2026-06-11","ANZ","70329638"],
+  ["263105670616","Colliers International - New Deal",6600,"2026-06-30","ANZ","70329638"],
+  ["270595409348","VBC. Brisbane - New Deal",6000,"2026-06-20","ANZ","1133383221"],
+  ["271178186217","Hostaway - New Deal",5940,"2026-06-25","ANZ","1133383220"],
+  ["270983862770","SoftLabs - New Deal",5940,"2026-06-25","ANZ","70329638"],
+  ["269595839931","Reveal - New Deal",5940,"2026-06-11","ANZ","70329638"],
+  ["262612434377","Zone IT Solutions - New Deal",5940,"2026-06-09","ANZ","70329638"],
+  ["257710975458","Procuret - New Deal",5940,"2026-06-07","ANZ","1133383220"],
+  ["256245007822","Studiosity - New Deal",5940,"2026-06-30","ANZ","1133383220"],
+  ["269318467063","SolarWinds - New Deal",5940,"2026-06-23","ANZ","70329638"],
+  ["271271012805","Dexion Storage Solutions - New Deal",5940,"2026-06-26","ANZ","70329638"],
+  ["268198235580","Centive - New Deal",5940,"2026-06-22","ANZ","1133383223"],
+  ["262246606305","Cloudstaff - New Deal",5940,"2026-06-24","ANZ","1133383220"],
+  ["268276101571","Intelli Systems - New Deal",5940,"2026-06-21","ANZ","70329638"],
+  ["269687624131","Vodafone East - New Deal",5940,"2026-06-14","ANZ","70329638"],
+  ["269596303846","Adaptive Security - Expansion",5940,"2026-06-17","United States","70329638"],
+  ["267252016580","AirRoad Direct - New Deal",5940,"2026-06-25","ANZ","1133383220"],
+  ["268625768911","Sonar - New Deal",5940,"2026-06-29","South East Asia","70329638"],
+  ["265257045473","Trellis Data - New Deal",5940,"2026-06-09","ANZ","1133383220"],
+  ["271178238396","ReadiNow - New Deal",5940,"2026-06-26","ANZ","70329638"],
+  ["268765770220","Brighta - New Deal",5940,"2026-06-11","ANZ","1133383221"],
+  ["269000772048","Findex - Australia",5940,"2026-06-23","ANZ","1133383220"],
+  ["268715127281","90Seconds - New Deal",5742,"2026-06-06","South East Asia","70329638"],
+  ["269000823238","Solarvest - New Deal",5742,"2026-06-06","South East Asia","70329638"],
+  ["270039936494","Riskified - New Deal",5742,"2026-06-18","South East Asia","70329638"],
+  ["268767096306","Nexus Logistics - New Deal",5677.2,"2026-06-04","ANZ","70329638"],
+];
+
+// Weekly CV data by market from Snowflake (Monday-keyed)
+// Format: {wk: {ANZ: x, SEA: x, US: x, OTHER: x, ALL: x}}
+const WEEKLY_CV_BY_MARKET = {
+  "2026-01-05": {"ANZ":33177.1,"SEA":0,"US":0,"OTHER":0},
+  "2026-01-12": {"ANZ":56411.0,"SEA":0,"US":0,"OTHER":0},
+  "2026-01-19": {"ANZ":78656.8,"SEA":0,"US":0,"OTHER":0},
+  "2026-01-26": {"ANZ":114318.4,"SEA":0,"US":0,"OTHER":0},
+  "2026-02-02": {"ANZ":103858.8,"SEA":0,"US":0,"OTHER":298.0},
+  "2026-02-09": {"ANZ":47622.5,"SEA":0,"US":0,"OTHER":0},
+  "2026-02-16": {"ANZ":72051.0,"SEA":0,"US":0,"OTHER":310.2},
+  "2026-02-23": {"ANZ":105176.2,"SEA":0,"US":0,"OTHER":2011.0},
+  "2026-03-02": {"ANZ":78535.6,"SEA":0,"US":0,"OTHER":0},
+  "2026-03-09": {"ANZ":64861.5,"SEA":0,"US":0,"OTHER":0},
+  "2026-03-16": {"ANZ":190372.8,"SEA":0,"US":0,"OTHER":0},
+  "2026-03-23": {"ANZ":105219.0,"SEA":0,"US":0,"OTHER":0},
+  "2026-03-30": {"ANZ":98666.6,"SEA":319.0,"US":0,"OTHER":0},
+  "2026-04-06": {"ANZ":63335.0,"SEA":319.0,"US":0,"OTHER":0},
+  "2026-04-13": {"ANZ":86737.4,"SEA":0,"US":0,"OTHER":0},
+  "2026-04-20": {"ANZ":165537.8,"SEA":3762.0,"US":0,"OTHER":0},
+  "2026-04-27": {"ANZ":192177.1,"SEA":0,"US":0,"OTHER":0},
+  "2026-05-04": {"ANZ":207535.8,"SEA":0,"US":0,"OTHER":0},
+  "2026-05-11": {"ANZ":74305.4,"SEA":440.0,"US":0,"OTHER":1245.0},
+  "2026-05-18": {"ANZ":77710.6,"SEA":440.0,"US":0,"OTHER":1245.0},
+  "2026-05-25": {"ANZ":107554.6,"SEA":10164.0,"US":0,"OTHER":0},
+};
+
+// Weekly pipeline created by market
+const WEEKLY_PIPE_BY_MARKET = {
+  "2026-01-12": {"ANZ":40080,"SEA":0,"US":0,"OTHER":9000},
+  "2026-01-19": {"ANZ":59000.75,"SEA":0,"US":0,"OTHER":9000},
+  "2026-01-26": {"ANZ":67580,"SEA":0,"US":0,"OTHER":0},
+  "2026-02-02": {"ANZ":63226,"SEA":0,"US":0,"OTHER":0},
+  "2026-02-09": {"ANZ":27677.2,"SEA":0,"US":0,"OTHER":1980},
+  "2026-02-16": {"ANZ":72180,"SEA":0,"US":0,"OTHER":7728},
+  "2026-02-23": {"ANZ":82686.4,"SEA":8608.8,"US":0,"OTHER":1980},
+  "2026-03-02": {"ANZ":116269.8,"SEA":2700,"US":0,"OTHER":1320},
+  "2026-03-09": {"ANZ":226400,"SEA":1254,"US":0,"OTHER":0},
+  "2026-03-16": {"ANZ":113486.2,"SEA":95040,"US":0,"OTHER":0},
+  "2026-03-23": {"ANZ":187122,"SEA":35362.8,"US":0,"OTHER":0},
+  "2026-03-30": {"ANZ":188553.4,"SEA":7603.2,"US":0,"OTHER":0},
+  "2026-04-06": {"ANZ":330796.8,"SEA":0,"US":0,"OTHER":0},
+  "2026-04-13": {"ANZ":92883.2,"SEA":11682,"US":0,"OTHER":0},
+  "2026-04-20": {"ANZ":539371.1,"SEA":41096,"US":0,"OTHER":0},
+  "2026-04-27": {"ANZ":108327.4,"SEA":15298.8,"US":0,"OTHER":0},
+  "2026-05-04": {"ANZ":432740.6,"SEA":39775.2,"US":0,"OTHER":11880},
+  "2026-05-11": {"ANZ":703256.6,"SEA":1254,"US":0,"OTHER":1980},
+  "2026-05-18": {"ANZ":416496.4,"SEA":23841.6,"US":15246,"OTHER":8880},
+  "2026-05-25": {"ANZ":429817.4,"SEA":28470,"US":0,"OTHER":11880},
+};
+
+// Monthly CV by market (Jun 2025 – Jun 2026)
+const MONTHLY_CV_BY_MARKET = {
+  "2025-06-01": {"ANZ":248641.48,"SEA":0,"US":0,"OTHER":4074.55},
+  "2025-07-01": {"ANZ":215314.95,"SEA":0,"US":0,"OTHER":0},
+  "2025-08-01": {"ANZ":359155.00,"SEA":0,"US":0,"OTHER":0},
+  "2025-09-01": {"ANZ":183334.15,"SEA":0,"US":0,"OTHER":0},
+  "2025-10-01": {"ANZ":274091.10,"SEA":0,"US":0,"OTHER":0},
+  "2025-11-01": {"ANZ":418521.11,"SEA":0,"US":0,"OTHER":0},
+  "2025-12-01": {"ANZ":183747.81,"SEA":0,"US":0,"OTHER":600},
+  "2026-01-01": {"ANZ":287096.1,"SEA":0,"US":0,"OTHER":0},
+  "2026-02-01": {"ANZ":328708.6,"SEA":0,"US":0,"OTHER":2619.2},
+  "2026-03-01": {"ANZ":483272.2,"SEA":319.0,"US":0,"OTHER":0},
+  "2026-04-01": {"ANZ":542269.7,"SEA":4081.0,"US":0,"OTHER":0},
+  "2026-05-01": {"ANZ":487007.2,"SEA":10604.0,"US":0,"OTHER":1245.0},
+  "2026-06-01": {"ANZ":80485.10,"SEA":0,"US":0,"OTHER":0},
+};
+
+// Monthly pipeline by market (Jun 2025 – Jun 2026)
+const MONTHLY_PIPE_BY_MARKET = {
+  "2025-06-01": {"ANZ":1068198.27,"SEA":0,"US":0,"OTHER":15890.91},
+  "2025-07-01": {"ANZ":1285816.19,"SEA":0,"US":0,"OTHER":0},
+  "2025-08-01": {"ANZ":1046812.84,"SEA":0,"US":0,"OTHER":0},
+  "2025-09-01": {"ANZ":1090870.29,"SEA":0,"US":0,"OTHER":0},
+  "2025-10-01": {"ANZ":1481060.36,"SEA":0,"US":0,"OTHER":0},
+  "2025-11-01": {"ANZ":1363205.65,"SEA":0,"US":0,"OTHER":7920},
+  "2025-12-01": {"ANZ":725366.05,"SEA":0,"US":0,"OTHER":2388},
+  "2026-01-01": {"ANZ":172860.75,"SEA":0,"US":0,"OTHER":9000},
+  "2026-02-01": {"ANZ":244449.6,"SEA":8608.8,"US":0,"OTHER":11688},
+  "2026-03-01": {"ANZ":745338.0,"SEA":140098.8,"US":0,"OTHER":1320},
+  "2026-04-01": {"ANZ":1114407.1,"SEA":69938,"US":0,"OTHER":0},
+  "2026-05-01": {"ANZ":2027095.8,"SEA":93340.8,"US":15246,"OTHER":34620},
+  "2026-06-01": {"ANZ":72953.70,"SEA":6330,"US":1861.2,"OTHER":0},
+};
+
+// =============================================================================
+// HELPERS
+// =============================================================================
+
+let selectedRegion = 'ALL';
+let _charts = {};
+
+function fmt(n, dec=0) {
+  if (n == null || isNaN(n)) return '--';
+  if (Math.abs(n) >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1000) return '$' + Math.round(n/1000) + 'K';
+  return '$' + n.toFixed(dec);
+}
+
+function fmtFull(n) {
+  if (n == null || isNaN(n)) return '--';
+  return '$' + Math.round(n).toLocaleString();
+}
+
+function dealMatchesRegion(market, region) {
+  if (region === 'ALL') return true;
+  const m = (market || '').trim();
+  if (region === 'ANZ') return ['ANZ','Australia','New Zealand'].includes(m);
+  if (region === 'SEA') return m === 'South East Asia';
+  if (region === 'US')  return m === 'United States';
+  if (region === 'OTHER') return !['ANZ','Australia','New Zealand','South East Asia','United States'].includes(m);
+  return true;
+}
+
+function getRegionCV(wkData) {
+  if (!wkData) return 0;
+  if (selectedRegion === 'ALL') return (wkData.ANZ||0)+(wkData.SEA||0)+(wkData.US||0)+(wkData.OTHER||0);
+  if (selectedRegion === 'ANZ') return wkData.ANZ||0;
+  if (selectedRegion === 'SEA') return wkData.SEA||0;
+  if (selectedRegion === 'US')  return wkData.US||0;
+  if (selectedRegion === 'OTHER') return wkData.OTHER||0;
+  return 0;
+}
+
+function marketBadge(market) {
+  const m = (market||'').trim();
+  if (['ANZ','Australia','New Zealand'].includes(m)) return `<span class="badge badge-anz">ANZ</span>`;
+  if (m === 'South East Asia') return `<span class="badge badge-sea">SEA</span>`;
+  if (m === 'United States') return `<span class="badge badge-us">US</span>`;
+  if (m) return `<span class="badge badge-other">${m}</span>`;
+  return `<span class="badge badge-other">--</span>`;
+}
+
+function dealTypeBadge(name, subType) {
+  const n = (name||'').toLowerCase();
+  if (n.includes('renewal')) return `<span class="badge badge-renewal">Renewal</span>`;
+  if (n.includes('expansion') || n.includes('upgrade')) return `<span class="badge badge-expansion">Expansion</span>`;
+  return `<span class="badge badge-new">New</span>`;
+}
+
+function dealLink(id, name) {
+  const url = `https://app-ap1.hubspot.com/contacts/24160926/record/0-3/${id}`;
+  return `<a href="${url}" target="_blank" class="deal-link">${name}</a>`;
+}
+
+function daysUntilBadge(closeDate) {
+  const today = new Date('2026-06-03');
+  const close = new Date(closeDate);
+  const diff = Math.round((close - today) / 86400000);
+  if (diff <= 7) return `<span class="days-badge days-urgent">${diff}d</span>`;
+  if (diff <= 14) return `<span class="days-badge days-soon">${diff}d</span>`;
+  return `<span class="days-badge days-ok">${diff}d</span>`;
+}
+
+function destroyChart(key) {
+  if (_charts[key]) { _charts[key].destroy(); delete _charts[key]; }
+}
+
+// =============================================================================
+// CHART RENDERING
+// =============================================================================
+
+function renderWeeklyCV() {
+  destroyChart('weeklyCV');
+  // Last 13 weeks ending May 25
+  const weeks = [
+    "2026-03-02","2026-03-09","2026-03-16","2026-03-23","2026-03-30",
+    "2026-04-06","2026-04-13","2026-04-20","2026-04-27","2026-05-04",
+    "2026-05-11","2026-05-18","2026-05-25"
+  ];
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels = weeks.map(w => { const d = new Date(w+'T12:00:00'); return d.getDate()+' '+MN[d.getMonth()]; });
+  const values = weeks.map(w => getRegionCV(WEEKLY_CV_BY_MARKET[w]));
+  const colors = weeks.map(w => w === '2026-05-25' ? '#F15B06' : '#E9EAEB');
+  const ctx = document.getElementById('chartWeeklyCV').getContext('2d');
+  _charts.weeklyCV = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtFull(ctx.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmtFull(v), font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderWeeklyPipeline() {
+  destroyChart('weeklyPipe');
+  const weeks = [
+    "2026-03-02","2026-03-09","2026-03-16","2026-03-23","2026-03-30",
+    "2026-04-06","2026-04-13","2026-04-20","2026-04-27","2026-05-04",
+    "2026-05-11","2026-05-18","2026-05-25"
+  ];
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels = weeks.map(w => { const d = new Date(w+'T12:00:00'); return d.getDate()+' '+MN[d.getMonth()]; });
+  const values = weeks.map(w => getRegionCV(WEEKLY_PIPE_BY_MARKET[w]));
+  const colors = weeks.map(w => w === '2026-05-25' ? '#A48AFB' : '#d1d5db');
+  const ctx = document.getElementById('chartWeeklyPipeline').getContext('2d');
+  _charts.weeklyPipe = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => fmtFull(ctx.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmtFull(v), font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderMonthlyCV() {
+  destroyChart('monthlyCV');
+  const months = [
+    '2025-06-01','2025-07-01','2025-08-01','2025-09-01','2025-10-01','2025-11-01','2025-12-01',
+    '2026-01-01','2026-02-01','2026-03-01','2026-04-01','2026-05-01','2026-06-01'
+  ];
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels = months.map(m => { const d = new Date(m+'T12:00:00'); return MN[d.getMonth()]+' '+String(d.getFullYear()).slice(2); });
+  const values = months.map(m => getRegionCV(MONTHLY_CV_BY_MARKET[m]));
+  const colors = months.map(m => (m === '2026-05-01' || m === '2026-06-01') ? '#F15B06' : '#E9EAEB');
+  const datasets = [{ type:'bar', label:'Actual', data: values, backgroundColor: colors, borderRadius: 3, order: 2 }];
+  if (selectedRegion === 'ALL') {
+    const targets = months.map(m => MONTHLY_TARGETS.cv[m] || null);
+    datasets.push({
+      type: 'line', data: targets, borderColor: '#9ca3af', borderWidth: 2,
+      borderDash: [5,4], pointRadius: 3, pointBackgroundColor: '#9ca3af',
+      fill: false, order: 1, label: 'Target'
+    });
+  }
+  const ctx = document.getElementById('chartMonthlyCV').getContext('2d');
+  _charts.monthlyCV = new Chart(ctx, {
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: selectedRegion === 'ALL', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => fmtFull(ctx.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmtFull(v), font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+function renderMonthlyPipeline() {
+  destroyChart('monthlyPipe');
+  const months = [
+    '2025-06-01','2025-07-01','2025-08-01','2025-09-01','2025-10-01','2025-11-01','2025-12-01',
+    '2026-01-01','2026-02-01','2026-03-01','2026-04-01','2026-05-01','2026-06-01'
+  ];
+  const MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels = months.map(m => { const d = new Date(m+'T12:00:00'); return MN[d.getMonth()]+' '+String(d.getFullYear()).slice(2); });
+  const values = months.map(m => getRegionCV(MONTHLY_PIPE_BY_MARKET[m]));
+  const colors = months.map(m => (m === '2026-05-01' || m === '2026-06-01') ? '#A48AFB' : '#d1d5db');
+  const datasets = [{ type:'bar', label:'Actual', data: values, backgroundColor: colors, borderRadius: 3, order: 2 }];
+  if (selectedRegion === 'ALL') {
+    const targets = months.map(m => MONTHLY_TARGETS.pipeline[m] || null);
+    datasets.push({
+      type: 'line', data: targets, borderColor: '#9ca3af', borderWidth: 2,
+      borderDash: [5,4], pointRadius: 3, pointBackgroundColor: '#9ca3af',
+      fill: false, order: 1, label: 'Target'
+    });
+  }
+  const ctx = document.getElementById('chartMonthlyPipeline').getContext('2d');
+  _charts.monthlyPipe = new Chart(ctx, {
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: selectedRegion === 'ALL', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => fmtFull(ctx.raw) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { grid: { color: '#f0f0f0' }, ticks: { callback: v => fmtFull(v), font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// =============================================================================
+// METRICS RENDERING
+// =============================================================================
+
+function renderMTD() {
+  // June 2026 CV MTD - only what's in MONTHLY_CV_BY_MARKET['2026-06-01']
+  const cvMTD = getRegionCV(MONTHLY_CV_BY_MARKET['2026-06-01']);
+  const pipeMTD = getRegionCV(MONTHLY_PIPE_BY_MARKET['2026-06-01']);
+  const cvTarget = MONTHLY_TARGETS.cv['2026-06-01'];
+  const pipeTarget = MONTHLY_TARGETS.pipeline['2026-06-01'];
+
+  document.getElementById('mtd-cv-value').textContent = fmtFull(cvMTD);
+  document.getElementById('mtd-pipe-value').textContent = fmtFull(pipeMTD);
+
+  if (selectedRegion === 'ALL') {
+    const cvPct = Math.min(cvMTD / cvTarget * 100, 100);
+    const pipePct = Math.min(pipeMTD / pipeTarget * 100, 100);
+    document.getElementById('mtd-cv-target').textContent = 'Target: ' + fmtFull(cvTarget);
+    document.getElementById('mtd-pipe-target').textContent = 'Target: ' + fmtFull(pipeTarget);
+    document.getElementById('mtd-cv-bar').style.width = cvPct + '%';
+    document.getElementById('mtd-cv-bar').style.background = cvPct >= 100 ? 'var(--green)' : 'var(--ember)';
+    document.getElementById('mtd-pipe-bar').style.width = pipePct + '%';
+    document.getElementById('mtd-pipe-bar').style.background = pipePct >= 100 ? 'var(--green)' : 'var(--twilight)';
+    document.getElementById('mtd-cv-pct').textContent = Math.round(cvMTD / cvTarget * 100) + '% of target';
+    document.getElementById('mtd-pipe-pct').textContent = Math.round(pipeMTD / pipeTarget * 100) + '% of target';
+  } else {
+    document.getElementById('mtd-cv-target').textContent = '';
+    document.getElementById('mtd-pipe-target').textContent = '';
+    document.getElementById('mtd-cv-bar').style.width = '0%';
+    document.getElementById('mtd-pipe-bar').style.width = '0%';
+    document.getElementById('mtd-cv-pct').textContent = 'Jun MTD (target available for All Markets only)';
+    document.getElementById('mtd-pipe-pct').textContent = 'Jun MTD (target available for All Markets only)';
+  }
+}
+
+function renderWeekMetrics() {
+  const cvWeek = getRegionCV(WEEKLY_CV_BY_MARKET['2026-05-25']);
+  const pipeWeek = getRegionCV(WEEKLY_PIPE_BY_MARKET['2026-05-25']);
+  document.getElementById('metric-cv-week').textContent = fmtFull(cvWeek);
+  document.getElementById('metric-pipe-week').textContent = fmtFull(pipeWeek);
+  const closedCount = CLOSED_DEALS_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion)).length;
+  const pipeCount = PIPELINE_CREATED_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion)).length;
+  document.getElementById('metric-cv-week-sub').textContent = closedCount + ' closed deals';
+  document.getElementById('metric-pipe-week-sub').textContent = pipeCount + ' deals created';
+}
+
+// =============================================================================
+// TABLE RENDERING
+// =============================================================================
+
+function renderSalesKV() {
+  const filtered = CLOSED_DEALS_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion));
+  const cvSum = filtered.reduce((s,r) => s + (+r[4]||0), 0);
+  const pipeFiltered = PIPELINE_CREATED_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion));
+  const pipeSum = pipeFiltered.reduce((s,r) => s + (+r[2]||0), 0);
+  const featured = KPI_WEEKS[0];
+  const rows = [
+    ['Total ARR', fmtFull(featured.totalArr)],
+    ['ARR Add', fmtFull(featured.arrDelta)],
+    ['Trials', featured.trials],
+    ['New Customers', featured.newCustomers],
+    ['CV (' + (selectedRegion==='ALL'?'All':selectedRegion) + ')', fmtFull(cvSum)],
+    ['Closed Deals (' + (selectedRegion==='ALL'?'All':selectedRegion) + ')', filtered.length],
+    ['Pipeline Created (' + (selectedRegion==='ALL'?'All':selectedRegion) + ')', fmtFull(pipeSum)],
+    ['New Pipeline Deals', pipeFiltered.length],
+    ['Churn ARR', fmtFull(featured.churnArr)],
+  ];
+  const html = rows.map(([l,v]) => `<div class="kv-row"><span class="kv-label">${l}</span><span class="kv-value">${v}</span></div>`).join('');
+  document.getElementById('sales-kv').innerHTML = html;
+}
+
+function renderClosedDealsTable() {
+  const filtered = CLOSED_DEALS_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion));
+  if (!filtered.length) {
+    document.getElementById('closed-deals-table').innerHTML = '<div class="empty-state">No closed deals for this region in W/C 25 May 2026</div>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>Deal</th><th>Type</th><th>Market</th><th>CV</th><th>Closed</th>
+  </tr></thead><tbody>`;
+  filtered.sort((a,b) => (b[4]||0)-(a[4]||0)).forEach(r => {
+    const [id,name,amt,cd,cv,market,subType] = r;
+    html += `<tr>
+      <td>${dealLink(id, name)}</td>
+      <td>${dealTypeBadge(name, subType)}</td>
+      <td>${marketBadge(market)}</td>
+      <td><strong>${fmtFull(cv)}</strong></td>
+      <td style="white-space:nowrap">${cd}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('closed-deals-table').innerHTML = html;
+}
+
+function renderPipelineCreatedTable() {
+  const filtered = PIPELINE_CREATED_RAW.filter(r => dealMatchesRegion(r[5], selectedRegion) && r[2]);
+  if (!filtered.length) {
+    document.getElementById('pipeline-created-table').innerHTML = '<div class="empty-state">No pipeline created for this region in W/C 25 May 2026</div>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>Deal</th><th>Type</th><th>Market</th><th>Amount</th><th>Created</th><th>Close Date</th>
+  </tr></thead><tbody>`;
+  filtered.sort((a,b) => (b[2]||0)-(a[2]||0)).filter(r => r[2] > 0).forEach(r => {
+    const [id,name,amt,createDate,closeDate,market,stage] = r;
+    html += `<tr>
+      <td>${dealLink(id, name)}</td>
+      <td>${dealTypeBadge(name)}</td>
+      <td>${marketBadge(market)}</td>
+      <td><strong>${fmtFull(amt)}</strong></td>
+      <td style="white-space:nowrap">${createDate}</td>
+      <td style="white-space:nowrap">${closeDate||'--'}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('pipeline-created-table').innerHTML = html;
+}
+
+function renderPriorityDeals() {
+  // Deals closing Jun 3 to Jul 1 2026
+  const filtered = OPEN_PIPELINE_RAW.filter(r => {
+    if (!dealMatchesRegion(r[4], selectedRegion)) return false;
+    return r[3] >= '2026-06-03' && r[3] <= '2026-07-01';
+  }).sort((a,b) => b[2]-a[2]);
+
+  if (!filtered.length) {
+    document.getElementById('priority-deals-table').innerHTML = '<div class="empty-state">No priority deals for this region</div>';
+    return;
+  }
+  let html = `<table><thead><tr>
+    <th>Deal</th><th>Market</th><th>Amount (AUD)</th><th>Close Date</th><th>Days</th>
+  </tr></thead><tbody>`;
+  filtered.forEach(r => {
+    const [id,name,amt,closeDate,market,stage] = r;
+    html += `<tr>
+      <td>${dealLink(id, name)}</td>
+      <td>${marketBadge(market)}</td>
+      <td><strong>${fmtFull(amt)}</strong></td>
+      <td style="white-space:nowrap">${closeDate}</td>
+      <td>${daysUntilBadge(closeDate)}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('priority-deals-table').innerHTML = html;
+}
+
+// =============================================================================
+// REGION + TAB LOGIC
+// =============================================================================
+
+function setRegion(region) {
+  selectedRegion = region;
+  document.querySelectorAll('.region-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  // Show/hide "vs Target" in monthly chart titles — targets are global only
+  const vtText = selectedRegion === 'ALL' ? 'vs Target ' : '';
+  const cvEl = document.getElementById('cv-monthly-vs-target');
+  const pipeEl = document.getElementById('pipe-monthly-vs-target');
+  if (cvEl) cvEl.textContent = vtText;
+  if (pipeEl) pipeEl.textContent = vtText;
+  renderAll();
+}
+
+function setTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function renderAll() {
+  renderWeeklyCV();
+  renderWeeklyPipeline();
+  renderMonthlyCV();
+  renderMonthlyPipeline();
+  renderMTD();
+  renderWeekMetrics();
+  renderSalesKV();
+  renderClosedDealsTable();
+  renderPipelineCreatedTable();
+  renderPriorityDeals();
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', renderAll);
+</script>
+</body>
+</html>
